@@ -1,0 +1,212 @@
+{
+  "identity": {
+    "name": "E1",
+    "persona": "The Anti-AI Designer",
+    "principles": [
+      "Fusion over Imitation: Mix disparate disciplines.",
+      "Emotion First: Every design decision maps to a feeling.",
+      "Content is King: Tell a story with direction.",
+      "Zoom In: Bold focus on details.",
+      "Negative Space: Value empty areas.",
+      "Contrast: Light vs Dark, Rough vs Smooth."
+    ],
+    "anti_patterns": [
+      "Purple/Teal for CTA",
+      "Inter for Headings",
+      "Center-Everything",
+      "Gradient Overload (>20%)"
+    ]
+  },
+  "project": {
+    "name": "SellerRadar Pro",
+    "description": "Premium internal research dashboard for analyzing third-party sellers on Amazon marketplaces.",
+    "context": "Internal Tool / Dashboard / Analytics",
+    "theme_mode": "dark",
+    "user_preferences": {
+      "theme": "Dark Luxury",
+      "colors": {
+        "background": "#0b0f14",
+        "panel": "#141a22",
+        "card": "#1a2230",
+        "primary": "#3b82f6",
+        "secondary": "#60a5fa",
+        "success": "#22c55e",
+        "warning": "#f59e0b",
+        "danger": "#ef4444",
+        "text_primary": "#f8fafc",
+        "text_secondary": "#94a3b8"
+      },
+      "style": "Glassmorphism, rounded-2xl, soft shadows, no emojis",
+      "icons": "lucide-react"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": {
+        "family": "Manrope",
+        "weights": ["400", "600", "800"],
+        "usage": "Page titles, Card headers, Big Metrics",
+        "import_url": "https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap"
+      },
+      "body": {
+        "family": "Inter",
+        "weights": ["400", "500"],
+        "usage": "General text, labels, descriptions",
+        "import_url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      },
+      "mono": {
+        "family": "JetBrains Mono",
+        "weights": ["400"],
+        "usage": "IDs, ASINs, Prices, Timestamps, Logs",
+        "import_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap"
+      }
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-extrabold tracking-tight",
+      "h2": "text-2xl md:text-3xl font-bold tracking-tight",
+      "h3": "text-xl font-semibold tracking-normal",
+      "body": "text-sm md:text-base leading-relaxed text-slate-300",
+      "mono_sm": "font-mono text-xs text-slate-400"
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "#0b0f14",
+      "surface": "#141a22",
+      "card": "#1a2230",
+      "border": "#1e293b",
+      "primary": "#3b82f6",
+      "primary_hover": "#2563eb",
+      "secondary": "#60a5fa",
+      "accent": "#3b82f6",
+      "success": "#22c55e",
+      "warning": "#f59e0b",
+      "danger": "#ef4444",
+      "text": {
+        "primary": "#f8fafc",
+        "secondary": "#94a3b8",
+        "muted": "#64748b"
+      }
+    },
+    "tailwind_overrides": {
+      "--background": "216 38% 6%",
+      "--foreground": "210 40% 98%",
+      "--card": "217 33% 15%",
+      "--card-foreground": "210 40% 98%",
+      "--popover": "217 33% 15%",
+      "--popover-foreground": "210 40% 98%",
+      "--primary": "217 91% 60%",
+      "--primary-foreground": "210 40% 98%",
+      "--secondary": "217 91% 68%",
+      "--secondary-foreground": "222 47% 11%",
+      "--muted": "215 25% 27%",
+      "--muted-foreground": "215 20% 65%",
+      "--accent": "217 33% 17%",
+      "--accent-foreground": "210 40% 98%",
+      "--destructive": "0 84% 60%",
+      "--destructive-foreground": "210 40% 98%",
+      "--border": "217 33% 20%",
+      "--input": "217 33% 20%",
+      "--ring": "217 91% 60%"
+    },
+    "gradients": {
+      "primary_glow": "bg-gradient-to-r from-blue-600/20 to-blue-400/5",
+      "surface_glass": "bg-[#141a22]/80 backdrop-blur-xl border border-white/5",
+      "card_glass": "bg-[#1a2230]/90 backdrop-blur-md border border-white/5 shadow-xl"
+    }
+  },
+  "layout": {
+    "grid_system": "Bento Grid - High Density Mode",
+    "container": "max-w-[1600px] mx-auto p-4 md:p-6",
+    "structure": {
+      "dashboard": {
+        "grid": "grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6",
+        "sidebar": "col-span-12 md:col-span-3 lg:col-span-3 h-full overflow-hidden flex flex-col gap-4",
+        "main": "col-span-12 md:col-span-9 lg:col-span-9 flex flex-col gap-4 md:gap-6"
+      }
+    },
+    "spacing": {
+      "section_gap": "gap-8",
+      "card_padding": "p-5 md:p-6",
+      "dense_padding": "p-3"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary hover:bg-primary-hover text-white shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 hover:scale-[1.02]",
+      "secondary": "bg-white/5 hover:bg-white/10 text-white border border-white/10 backdrop-blur-sm transition-all duration-200",
+      "ghost": "hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+    },
+    "cards": {
+      "default": "bg-card rounded-2xl border border-white/5 shadow-lg overflow-hidden relative",
+      "glass": "bg-card/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl",
+      "stat": "relative overflow-hidden group hover:border-primary/30 transition-colors duration-300"
+    },
+    "inputs": {
+      "default": "bg-[#0b0f14] border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-sm rounded-lg h-10"
+    },
+    "badges": {
+      "status": {
+        "running": "bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse",
+        "stopped": "bg-slate-500/10 text-slate-400 border border-slate-500/20",
+        "success": "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+        "error": "bg-red-500/10 text-red-400 border border-red-500/20"
+      }
+    },
+    "table": {
+      "container": "rounded-xl border border-white/5 overflow-hidden",
+      "header": "bg-[#141a22] hover:bg-[#141a22] text-xs font-semibold text-slate-400 uppercase tracking-wider",
+      "row": "border-b border-white/5 hover:bg-white/5 transition-colors data-[state=selected]:bg-white/5",
+      "cell": "py-3 px-4 text-sm"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-opacity-80",
+    "shadows": "shadow-[0_8px_30px_rgb(0,0,0,0.12)]",
+    "borders": "border border-white/10",
+    "glow": "shadow-[0_0_20px_-5px_rgba(59,130,246,0.3)]"
+  },
+  "assets": {
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-[1.5px] w-5 h-5"
+    }
+  },
+  "instructions_to_main_agent": {
+    "setup": [
+      "1. Update `index.css` with the CSS variables provided in colors.tailwind_overrides.",
+      "2. Install `@fontsource/manrope`, `@fontsource/inter`, `@fontsource/jetbrains-mono` if not present, or use Google Fonts import.",
+      "3. Ensure `tailwind.config.js` has `darkMode: 'class'`."
+    ],
+    "development_rules": [
+      "Use 'Bento Grid' layout: Activity log on the side or bottom, Main stats top, Data table dominant.",
+      "Implement the 'Glassmorphism' effect on the control panel to give it a floating command center feel.",
+      "Use `JetBrains Mono` for any ID numbers, hashes, or technical data logs.",
+      "NO EMOJIS. Use lucide-react icons for visual indicators.",
+      "Marketplace Selector: Use text badges (ES, DE, IT, FR) inside the dropdown.",
+      "Activity Log: Make it look like a terminal or code feed (monospaced, small text, timestamped).",
+      "Charts: Use Shadcn/Recharts for the 'Top Stats' if applicable (e.g. sparklines), otherwise use big numbers.",
+      "Dark Mode is default and only mode. Do not implement light mode toggle.",
+      "Use `data-testid` on all interactive elements."
+    ]
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+      "You tend to converge toward generic, 'on distribution' outputs. In frontend design, this creates what users call the 'AI slop' aesthetic. Avoid this: make creative, distinctive frontends that surprise and delight.",
+      "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+      "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+      "Create depth through layered design elements with z-index hierarchy",
+      "Use glass-morphism effects with backdrop filters (12-24px blur)",
+      "You MUST NOT apply universal transition. Eg: `transition: all`. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+      "You MUST NOT center align the app container, ie do not add `.App { text-align: center; }` in the css file. This disrupts the human natural reading flow of text",
+      "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+      "NEVER: use AI assistant Emoji characters like 🤖🧠💭 etc for icons.",
+      "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+      "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+      "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+      "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+      "Prioritize using pre-existing components from src/components/ui when applicable",
+      "Components MUST use named exports (export const ComponentName = ...)",
+      "Pages MUST use default exports (export default function PageName() {...})",
+      "Use `sonner` for toasts"
+  ]
+}
