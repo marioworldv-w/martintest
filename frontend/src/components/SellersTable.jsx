@@ -1,8 +1,9 @@
-import { ExternalLink, Trash2, ChevronLeft, ChevronRight, Inbox } from "lucide-react";
+import { ExternalLink, Trash2, ChevronLeft, ChevronRight, Inbox, Flag } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { LeadScoreBadge } from "@/components/LeadScoreBadge";
 
 const STATUS_STYLES = {
   confirmed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -25,7 +26,7 @@ const formatDate = (iso) => {
   } catch { return ""; }
 };
 
-export const SellersTable = ({ sellers = [], totalSellers = 0, totalPages = 1, currentPage = 1, onPageChange, onDeleteSeller }) => {
+export const SellersTable = ({ sellers = [], totalSellers = 0, totalPages = 1, currentPage = 1, onPageChange, onDeleteSeller, onSelectSeller }) => {
   return (
     <div className="glass-card rounded-2xl overflow-hidden" data-testid="sellers-table">
       <div className="p-4 border-b border-white/5 flex items-center justify-between">
@@ -48,6 +49,7 @@ export const SellersTable = ({ sellers = [], totalSellers = 0, totalPages = 1, c
               <TableRow className="border-b border-white/5 hover:bg-transparent">
                 <TableHead className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider w-[60px]">MP</TableHead>
                 <TableHead className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Seller</TableHead>
+                <TableHead className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider w-[50px]">Score</TableHead>
                 <TableHead className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Product</TableHead>
                 <TableHead className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Country</TableHead>
                 <TableHead className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">VAT / Reg</TableHead>
@@ -62,8 +64,9 @@ export const SellersTable = ({ sellers = [], totalSellers = 0, totalPages = 1, c
               {sellers.map((s, i) => (
                 <TableRow
                   key={s.id}
-                  className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
+                  className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors cursor-pointer ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
                   data-testid={`seller-row-${i}`}
+                  onClick={() => onSelectSeller?.(s.id)}
                 >
                   <TableCell className="py-2.5">
                     <span className="font-code text-[10px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
@@ -72,9 +75,15 @@ export const SellersTable = ({ sellers = [], totalSellers = 0, totalPages = 1, c
                   </TableCell>
                   <TableCell className="py-2.5">
                     <div className="flex flex-col">
-                      <span className="text-sm text-white font-medium leading-tight">{s.seller_name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm text-white font-medium leading-tight">{s.seller_name}</span>
+                        {s.flagged && <Flag className="w-3 h-3 text-red-400 shrink-0" />}
+                      </div>
                       <span className="text-[10px] text-slate-500 leading-tight">{s.business_name_if_visible}</span>
                     </div>
+                  </TableCell>
+                  <TableCell className="py-2.5">
+                    <LeadScoreBadge score={s.quality_score || 0} />
                   </TableCell>
                   <TableCell className="py-2.5 hidden md:table-cell">
                     <span className="text-xs text-slate-400 line-clamp-1">{s.product_title_short}</span>

@@ -1,17 +1,19 @@
-import { Search, Users, Database, Copy, Activity, Clock } from "lucide-react";
+import { Search, Users, Database, Copy, Activity, Clock, Gauge, Flag } from "lucide-react";
 
 const CARDS_CONFIG = [
-  { key: "products_scanned", label: "Products Scanned", icon: Search, colorClass: "text-blue-400", bgClass: "bg-blue-500/10" },
-  { key: "total_sellers", label: "Unique Sellers", icon: Users, colorClass: "text-emerald-400", bgClass: "bg-emerald-500/10" },
-  { key: "confirmed_sellers", label: "Records Saved", icon: Database, colorClass: "text-sky-400", bgClass: "bg-sky-500/10" },
-  { key: "duplicates_skipped", label: "Duplicates Skipped", icon: Copy, colorClass: "text-amber-400", bgClass: "bg-amber-500/10" },
-  { key: "run_status", label: "Run Status", icon: Activity, isStatus: true },
-  { key: "sellers_per_hour", label: "Sellers / Hour", icon: Clock, colorClass: "text-violet-400", bgClass: "bg-violet-500/10" },
+  { key: "products_scanned", label: "Scanned", icon: Search, colorClass: "text-blue-400", bgClass: "bg-blue-500/10" },
+  { key: "total_sellers", label: "Sellers", icon: Users, colorClass: "text-emerald-400", bgClass: "bg-emerald-500/10" },
+  { key: "confirmed_sellers", label: "Confirmed", icon: Database, colorClass: "text-sky-400", bgClass: "bg-sky-500/10" },
+  { key: "avg_quality_score", label: "Avg Score", icon: Gauge, colorClass: "text-violet-400", bgClass: "bg-violet-500/10" },
+  { key: "flagged_count", label: "Flagged", icon: Flag, colorClass: "text-red-400", bgClass: "bg-red-500/10" },
+  { key: "run_status", label: "Status", icon: Activity, isStatus: true },
+  { key: "sellers_per_hour", label: "Rate/h", icon: Clock, colorClass: "text-amber-400", bgClass: "bg-amber-500/10" },
+  { key: "pending_review", label: "Pending", icon: Copy, colorClass: "text-orange-400", bgClass: "bg-orange-500/10" },
 ];
 
 export const StatsCards = ({ stats }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3" data-testid="stats-cards">
+    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3" data-testid="stats-cards">
       {CARDS_CONFIG.map((card, i) => {
         const Icon = card.icon;
         const value = stats?.[card.key] ?? 0;

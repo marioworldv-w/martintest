@@ -50,6 +50,58 @@ class SettingsUpdate(BaseModel):
     default_max_delay: Optional[int] = None
     default_mode: Optional[str] = None
     default_target_count: Optional[int] = None
+    scoring_weights: Optional[dict] = None
+    duplicate_rules: Optional[dict] = None
+    export_options: Optional[dict] = None
+
+class NotesUpdate(BaseModel):
+    notes: str
+
+class FlagUpdate(BaseModel):
+    flagged: bool = True
+    flagged_reason: str = ""
+
+class SavedViewCreate(BaseModel):
+    name: str
+    filters: dict = {}
+
+EU_COUNTRIES = {"Germany", "Spain", "France", "Italy", "Netherlands", "Belgium", "Austria",
+    "Portugal", "Greece", "Poland", "Sweden", "Denmark", "Finland", "Ireland",
+    "Czech Republic", "Romania", "Hungary", "Croatia", "Slovakia", "Slovenia",
+    "Bulgaria", "Lithuania", "Latvia", "Estonia", "Luxembourg", "Malta", "Cyprus"}
+
+DEFAULT_SCORING_WEIGHTS = {
+    "vat_present": 20, "registration_present": 15, "phone_present": 20,
+    "email_present": 20, "address_present": 15, "eu_country": 10,
+}
+
+def calculate_lead_score(seller, weights=None):
+    w = weights or DEFAULT_SCORING_WEIGHTS
+    score = 0
+    if seller.get("vat_number_if_visible"):
+        score += w.get("vat_present", 20)
+    if seller.get("registration_number_if_visible"):
+        score += w.get("registration_present", 15)
+    if seller.get("public_phone_if_visible"):
+        score += w.get("phone_present", 20)
+    if seller.get("public_email_if_visible"):
+        score += w.get("email_present", 20)
+    if seller.get("business_address_if_visible"):
+        score += w.get("address_present", 15)
+    if seller.get("country_if_visible") in EU_COUNTRIES:
+        score += w.get("eu_country", 10)
+    return min(score, 100)
+
+def get_score_breakdown(seller, weights=None):
+    w = weights or DEFAULT_SCORING_WEIGHTS
+    return [
+        {"factor": "VAT Number", "present": bool(seller.get("vat_number_if_visible")), "points": w.get("vat_present", 20)},
+        {"factor": "Registration #", "present": bool(seller.get("registration_number_if_visible")), "points": w.get("registration_present", 15)},
+        {"factor": "Phone", "present": bool(seller.get("public_phone_if_visible")), "points": w.get("phone_present", 20)},
+        {"factor": "Email", "present": bool(seller.get("public_email_if_visible")), "points": w.get("email_present", 20)},
+        {"factor": "Address", "present": bool(seller.get("business_address_if_visible")), "points": w.get("address_present", 15)},
+        {"factor": "EU Country", "present": seller.get("country_if_visible") in EU_COUNTRIES, "points": w.get("eu_country", 10)},
+    ]
 
 # ═══════════════════════════════════════════════════
 # MOCK DATA CONSTANTS
@@ -216,7 +268,7 @@ def generate_mock_seller(marketplace, seller_data=None, product_title=None, asin
     address = f"{seller_data['street']}, {seller_data['city']}, {config['country']}"
     now = datetime.now(timezone.utc).isoformat()
 
-    return {
+    seller = {
         "id": str(uuid.uuid4()),
         "marketplace": marketplace,
         "seller_name": seller_data["name"],
@@ -239,7 +291,12 @@ def generate_mock_seller(marketplace, seller_data=None, product_title=None, asin
         "source_page_type": random.choice(["seller_info", "product_page", "storefront"]),
         "notes": "",
         "status": "confirmed",
+        "quality_score": 0,
+        "flagged": False,
+        "flagged_reason": "",
     }
+    seller["quality_score"] = calculate_lead_score(seller)
+    return seller
 
 async def add_log(session_id, marketplace, action, detail, level="info"):
     entry = {
@@ -427,12 +484,17 @@ async def get_stats():
     total_sellers = await db.sellers.count_documents({})
     confirmed = await db.sellers.count_documents({"status": "confirmed"})
     pending = await db.sellers.count_documents({"status": "pending_review"})
+    flagged = await db.sellers.count_documents({"flagged": True})
     products_scanned = await db.processed_urls.count_documents({})
     status = worker.get_status()
+    avg_score_agg = await db.sellers.aggregate([{"$group": {"_id": None, "avg": {"$avg": {"$ifNull": ["$quality_score", 0]}}}}]).to_list(1)
+    avg_score = round(avg_score_agg[0]["avg"] or 0, 1) if avg_score_agg else 0
     return {
         "total_sellers": total_sellers,
         "confirmed_sellers": confirmed,
         "pending_review": pending,
+        "flagged_count": flagged,
+        "avg_quality_score": avg_score,
         "duplicates_skipped": status["duplicates_skipped"] if status["is_running"] else await db.sellers.count_documents({"status": "duplicate"}),
         "products_scanned": status["products_scanned"] if status["is_running"] else products_scanned,
         "sellers_per_hour": status["sellers_per_hour"],
@@ -452,6 +514,9 @@ async def get_sellers(
     search: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
+    min_score: Optional[int] = None,
+    max_score: Optional[int] = None,
+    flagged: Optional[bool] = None,
     page: int = 1,
     limit: int = 20,
     sort_by: str = "collected_at",
@@ -472,6 +537,12 @@ async def get_sellers(
         query["registration_number_if_visible"] = {"$ne": ""}
     if status:
         query["status"] = status
+    if flagged is not None:
+        query["flagged"] = flagged
+    if min_score is not None:
+        query.setdefault("quality_score", {})["$gte"] = min_score
+    if max_score is not None:
+        query.setdefault("quality_score", {})["$lte"] = max_score
     if date_from:
         query.setdefault("collected_at", {})["$gte"] = date_from
     if date_to:
@@ -555,6 +626,9 @@ async def get_settings():
             "manual_review_enabled": False, "default_marketplace": "amazon.de",
             "default_min_delay": 25, "default_max_delay": 45,
             "default_mode": "continuous", "default_target_count": 50,
+            "scoring_weights": DEFAULT_SCORING_WEIGHTS,
+            "duplicate_rules": {"by_profile_url": True, "by_name_marketplace": True, "by_email": True, "by_phone": True, "by_vat_or_reg": True},
+            "export_options": {"include_flagged_sheet": True, "include_analytics_sheet": True, "alternating_rows": True},
         }
         await db.settings.insert_one(default)
         return default
@@ -571,6 +645,119 @@ async def update_settings(req: SettingsUpdate):
     else:
         await db.settings.update_one({"id": "app_settings"}, {"$set": update_data})
     return await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+
+# ═══════════════ NEW ENDPOINTS ═══════════════
+
+@api_router.get("/sellers/{seller_id}")
+async def get_seller_detail(seller_id: str):
+    seller = await db.sellers.find_one({"id": seller_id}, {"_id": 0})
+    if not seller:
+        raise HTTPException(404, "Seller not found")
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    weights = settings.get("scoring_weights", DEFAULT_SCORING_WEIGHTS) if settings else DEFAULT_SCORING_WEIGHTS
+    seller["score_breakdown"] = get_score_breakdown(seller, weights)
+    return seller
+
+@api_router.put("/sellers/{seller_id}/notes")
+async def update_seller_notes(seller_id: str, req: NotesUpdate):
+    result = await db.sellers.update_one({"id": seller_id}, {"$set": {"notes": req.notes}})
+    if result.matched_count == 0:
+        raise HTTPException(404, "Seller not found")
+    return {"message": "Notes updated"}
+
+@api_router.post("/sellers/{seller_id}/flag")
+async def flag_seller(seller_id: str, req: FlagUpdate):
+    result = await db.sellers.update_one({"id": seller_id}, {"$set": {"flagged": req.flagged, "flagged_reason": req.flagged_reason}})
+    if result.matched_count == 0:
+        raise HTTPException(404, "Seller not found")
+    return {"message": "Seller flagged" if req.flagged else "Flag removed"}
+
+@api_router.get("/analytics")
+async def get_analytics():
+    total = await db.sellers.count_documents({})
+    if total == 0:
+        return {"marketplace_distribution": [], "records_over_time": [], "data_quality": {}, "score_distribution": [], "duplicate_rate": 0, "avg_score": 0, "flagged_count": 0}
+
+    mp_dist = await db.sellers.aggregate([
+        {"$group": {"_id": "$marketplace", "count": {"$sum": 1}}}
+    ]).to_list(100)
+
+    records_time = await db.sellers.aggregate([
+        {"$project": {"day": {"$substr": ["$collected_at", 0, 10]}}},
+        {"$group": {"_id": "$day", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}}
+    ]).to_list(100)
+
+    has_email = await db.sellers.count_documents({"public_email_if_visible": {"$ne": ""}})
+    has_phone = await db.sellers.count_documents({"public_phone_if_visible": {"$ne": ""}})
+    has_vat = await db.sellers.count_documents({"vat_number_if_visible": {"$ne": ""}})
+    has_reg = await db.sellers.count_documents({"registration_number_if_visible": {"$ne": ""}})
+    has_addr = await db.sellers.count_documents({"business_address_if_visible": {"$ne": ""}})
+    flagged = await db.sellers.count_documents({"flagged": True})
+
+    score_agg = await db.sellers.aggregate([
+        {"$bucket": {"groupBy": "$quality_score", "boundaries": [0, 20, 40, 60, 80, 101],
+                      "default": "other", "output": {"count": {"$sum": 1}}}},
+    ]).to_list(100)
+    score_dist = []
+    labels = ["0-19", "20-39", "40-59", "60-79", "80-100"]
+    for i, b in enumerate(score_agg):
+        score_dist.append({"range": labels[i] if i < len(labels) else "other", "count": b["count"]})
+
+    avg_score_agg = await db.sellers.aggregate([
+        {"$group": {"_id": None, "avg": {"$avg": "$quality_score"}}}
+    ]).to_list(1)
+    avg_score = round(avg_score_agg[0]["avg"], 1) if avg_score_agg else 0
+
+    dup_pipeline = [
+        {"$group": {"_id": {"name": "$seller_name", "mp": "$marketplace"}, "count": {"$sum": 1}}},
+        {"$match": {"count": {"$gt": 1}}},
+        {"$count": "total"}
+    ]
+    dup_result = await db.sellers.aggregate(dup_pipeline).to_list(1)
+    dup_rate = round((dup_result[0]["total"] / total * 100) if dup_result else 0, 1)
+
+    return {
+        "marketplace_distribution": [{"name": d["_id"], "value": d["count"]} for d in mp_dist],
+        "records_over_time": [{"date": d["_id"], "count": d["count"]} for d in records_time],
+        "data_quality": {"total": total, "has_email": has_email, "has_phone": has_phone, "has_vat": has_vat, "has_registration": has_reg, "has_address": has_addr},
+        "score_distribution": score_dist,
+        "duplicate_rate": dup_rate,
+        "avg_score": avg_score,
+        "flagged_count": flagged,
+    }
+
+@api_router.get("/saved-views")
+async def get_saved_views():
+    views = await db.saved_views.find({}, {"_id": 0}).to_list(100)
+    return views
+
+@api_router.post("/saved-views")
+async def create_saved_view(req: SavedViewCreate):
+    view = {"id": str(uuid.uuid4()), "name": req.name, "filters": req.filters, "created_at": datetime.now(timezone.utc).isoformat()}
+    await db.saved_views.insert_one(view)
+    return view
+
+@api_router.delete("/saved-views/{view_id}")
+async def delete_saved_view(view_id: str):
+    await db.saved_views.delete_one({"id": view_id})
+    return {"message": "View deleted"}
+
+@api_router.get("/review/queue")
+async def get_review_queue(page: int = 1, limit: int = 1):
+    total = await db.sellers.count_documents({"status": "pending_review"})
+    skip_n = (page - 1) * limit
+    items = await db.sellers.find({"status": "pending_review"}, {"_id": 0}).sort("collected_at", 1).skip(skip_n).limit(limit).to_list(limit)
+    for item in items:
+        item["score_breakdown"] = get_score_breakdown(item)
+    return {"items": items, "total": total, "page": page}
+
+@api_router.post("/review/{seller_id}/flag-duplicate")
+async def flag_review_duplicate(seller_id: str):
+    result = await db.sellers.update_one({"id": seller_id}, {"$set": {"status": "duplicate", "flagged": True, "flagged_reason": "Flagged as duplicate during review"}})
+    if result.matched_count == 0:
+        raise HTTPException(404, "Seller not found")
+    return {"message": "Flagged as duplicate"}
 
 # ═══════════════════════════════════════════════════
 # EXPORTS
@@ -590,9 +777,9 @@ async def export_excel():
     # Sheet 1: Sellers
     ws1 = wb.active
     ws1.title = "Sellers"
-    cols = ["Marketplace", "Seller Name", "Business Name", "Country", "VAT Number", "Registration",
+    cols = ["Marketplace", "Seller Name", "Business Name", "Country", "Quality Score", "VAT Number", "Registration",
             "Phone", "Email", "Product Title", "ASIN", "Brand", "Seller Type", "Address",
-            "Profile URL", "Collected At", "Status"]
+            "Profile URL", "Collected At", "Status", "Flagged"]
     for c, h in enumerate(cols, 1):
         cell = ws1.cell(row=1, column=c, value=h)
         cell.font = header_font
@@ -600,23 +787,29 @@ async def export_excel():
         cell.alignment = header_align
 
     sellers = await db.sellers.find({}, {"_id": 0}).sort("collected_at", -1).to_list(50000)
+    alt_fill = PatternFill(start_color="0f1419", end_color="0f1419", fill_type="solid")
     for r, s in enumerate(sellers, 2):
         ws1.cell(row=r, column=1, value=s.get("marketplace", ""))
         ws1.cell(row=r, column=2, value=s.get("seller_name", ""))
         ws1.cell(row=r, column=3, value=s.get("business_name_if_visible", ""))
         ws1.cell(row=r, column=4, value=s.get("country_if_visible", ""))
-        ws1.cell(row=r, column=5, value=s.get("vat_number_if_visible", ""))
-        ws1.cell(row=r, column=6, value=s.get("registration_number_if_visible", ""))
-        ws1.cell(row=r, column=7, value=s.get("public_phone_if_visible", ""))
-        ws1.cell(row=r, column=8, value=s.get("public_email_if_visible", ""))
-        ws1.cell(row=r, column=9, value=s.get("product_title_short", ""))
-        ws1.cell(row=r, column=10, value=s.get("asin", ""))
-        ws1.cell(row=r, column=11, value=s.get("brand_if_visible", ""))
-        ws1.cell(row=r, column=12, value=s.get("seller_type_if_visible", ""))
-        ws1.cell(row=r, column=13, value=s.get("business_address_if_visible", ""))
-        ws1.cell(row=r, column=14, value=s.get("seller_profile_url", ""))
-        ws1.cell(row=r, column=15, value=s.get("collected_at", "")[:19].replace("T", " ") if s.get("collected_at") else "")
-        ws1.cell(row=r, column=16, value=s.get("status", ""))
+        ws1.cell(row=r, column=5, value=s.get("quality_score", 0))
+        ws1.cell(row=r, column=6, value=s.get("vat_number_if_visible", ""))
+        ws1.cell(row=r, column=7, value=s.get("registration_number_if_visible", ""))
+        ws1.cell(row=r, column=8, value=s.get("public_phone_if_visible", ""))
+        ws1.cell(row=r, column=9, value=s.get("public_email_if_visible", ""))
+        ws1.cell(row=r, column=10, value=s.get("product_title_short", ""))
+        ws1.cell(row=r, column=11, value=s.get("asin", ""))
+        ws1.cell(row=r, column=12, value=s.get("brand_if_visible", ""))
+        ws1.cell(row=r, column=13, value=s.get("seller_type_if_visible", ""))
+        ws1.cell(row=r, column=14, value=s.get("business_address_if_visible", ""))
+        ws1.cell(row=r, column=15, value=s.get("seller_profile_url", ""))
+        ws1.cell(row=r, column=16, value=s.get("collected_at", "")[:19].replace("T", " ") if s.get("collected_at") else "")
+        ws1.cell(row=r, column=17, value=s.get("status", ""))
+        ws1.cell(row=r, column=18, value="Yes" if s.get("flagged") else "")
+        if r % 2 == 0:
+            for c in range(1, len(cols) + 1):
+                ws1.cell(row=r, column=c).fill = alt_fill
 
     ws1.auto_filter.ref = ws1.dimensions
     ws1.freeze_panes = "A2"
@@ -674,6 +867,51 @@ async def export_excel():
         max_len = max((len(str(ws3.cell(row=r, column=c).value or "")) for r in range(1, min(ws3.max_row + 1, 100))), default=10)
         ws3.column_dimensions[get_column_letter(c)].width = min(max_len + 3, 40)
 
+    # Sheet 4: Flagged Records
+    ws4 = wb.create_sheet("Flagged Records")
+    flag_cols = ["Seller Name", "Marketplace", "Country", "Score", "Reason", "Status"]
+    for c, h in enumerate(flag_cols, 1):
+        cell = ws4.cell(row=1, column=c, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+    flagged_sellers = [s for s in sellers if s.get("flagged")]
+    for r, s in enumerate(flagged_sellers, 2):
+        ws4.cell(row=r, column=1, value=s.get("seller_name", ""))
+        ws4.cell(row=r, column=2, value=s.get("marketplace", ""))
+        ws4.cell(row=r, column=3, value=s.get("country_if_visible", ""))
+        ws4.cell(row=r, column=4, value=s.get("quality_score", 0))
+        ws4.cell(row=r, column=5, value=s.get("flagged_reason", ""))
+        ws4.cell(row=r, column=6, value=s.get("status", ""))
+    ws4.auto_filter.ref = ws4.dimensions
+    ws4.freeze_panes = "A2"
+    for c in range(1, len(flag_cols) + 1):
+        max_len = max((len(str(ws4.cell(row=r, column=c).value or "")) for r in range(1, min(ws4.max_row + 1, 50))), default=10)
+        ws4.column_dimensions[get_column_letter(c)].width = min(max_len + 3, 40)
+
+    # Sheet 5: Analytics Summary
+    ws5 = wb.create_sheet("Analytics Summary")
+    title_font = Font(bold=True, color="3b82f6", size=14)
+    ws5.cell(row=1, column=1, value="SellerRadar Pro - Analytics Summary").font = title_font
+    ws5.cell(row=2, column=1, value=f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+    ws5.cell(row=4, column=1, value="Metric").font = header_font
+    ws5.cell(row=4, column=2, value="Value").font = header_font
+    ws5.cell(row=4, column=1).fill = header_fill
+    ws5.cell(row=4, column=2).fill = header_fill
+    metrics = [
+        ("Total Sellers", len(sellers)),
+        ("Avg Quality Score", round(sum(s.get("quality_score", 0) for s in sellers) / max(len(sellers), 1), 1)),
+        ("Has Email", sum(1 for s in sellers if s.get("public_email_if_visible"))),
+        ("Has Phone", sum(1 for s in sellers if s.get("public_phone_if_visible"))),
+        ("Has VAT", sum(1 for s in sellers if s.get("vat_number_if_visible"))),
+        ("Flagged Records", len(flagged_sellers)),
+    ]
+    for i, (m, v) in enumerate(metrics, 5):
+        ws5.cell(row=i, column=1, value=m)
+        ws5.cell(row=i, column=2, value=v)
+    ws5.column_dimensions["A"].width = 25
+    ws5.column_dimensions["B"].width = 15
+
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
@@ -685,10 +923,10 @@ async def export_csv():
     sellers = await db.sellers.find({}, {"_id": 0}).sort("collected_at", -1).to_list(50000)
     output = io.StringIO()
     fields = ["marketplace", "seller_name", "business_name_if_visible", "country_if_visible",
-              "vat_number_if_visible", "registration_number_if_visible", "public_phone_if_visible",
+              "quality_score", "vat_number_if_visible", "registration_number_if_visible", "public_phone_if_visible",
               "public_email_if_visible", "product_title_short", "asin", "brand_if_visible",
               "seller_type_if_visible", "business_address_if_visible", "seller_profile_url",
-              "collected_at", "status"]
+              "collected_at", "status", "flagged"]
     w = csv_module.DictWriter(output, fieldnames=fields, extrasaction='ignore')
     w.writeheader()
     for s in sellers:
@@ -708,31 +946,60 @@ async def seed_data():
     await db.sessions.delete_many({})
     await db.processed_urls.delete_many({})
     await db.settings.delete_many({})
+    await db.saved_views.delete_many({})
 
     now = datetime.now(timezone.utc)
     sellers_created = 0
     session_id = str(uuid.uuid4())
 
-    for marketplace, config in MARKETPLACE_CONFIG.items():
-        for i, seller_data in enumerate(config["sellers"][:7]):
-            days_ago = random.randint(0, 30)
-            collected = (now - timedelta(days=days_ago, hours=random.randint(0, 23))).isoformat()
-            seller = generate_mock_seller(marketplace, seller_data)
-            seller["collected_at"] = collected
-            seller["first_seen_at"] = collected
-            seller["last_seen_at"] = collected
-            if sellers_created in [5, 12, 20]:
-                seller["status"] = "pending_review"
-            await db.sellers.insert_one(seller)
-            sellers_created += 1
+    completeness_profiles = [
+        {"phone": True, "email": True, "vat": True, "reg": True, "addr": True},
+        {"phone": True, "email": True, "vat": True, "reg": False, "addr": True},
+        {"phone": True, "email": False, "vat": True, "reg": True, "addr": True},
+        {"phone": False, "email": True, "vat": True, "reg": False, "addr": True},
+        {"phone": True, "email": True, "vat": False, "reg": False, "addr": True},
+        {"phone": False, "email": False, "vat": True, "reg": True, "addr": True},
+        {"phone": True, "email": False, "vat": False, "reg": False, "addr": True},
+        {"phone": False, "email": True, "vat": False, "reg": False, "addr": False},
+        {"phone": False, "email": False, "vat": False, "reg": False, "addr": True},
+        {"phone": False, "email": False, "vat": False, "reg": False, "addr": False},
+    ]
 
-    actions_pool = ["scan_product", "seller_saved", "duplicate_skip", "scan_product", "seller_saved", "scan_product"]
-    for i in range(60):
+    for marketplace, config in MARKETPLACE_CONFIG.items():
+        all_sellers = config["sellers"]
+        for idx, seller_data in enumerate(all_sellers):
+            num_records = random.choice([3, 3, 4, 4, 5])
+            for j in range(num_records):
+                seller = generate_mock_seller(marketplace, seller_data)
+                profile = random.choice(completeness_profiles)
+                if not profile["phone"]: seller["public_phone_if_visible"] = ""
+                if not profile["email"]: seller["public_email_if_visible"] = ""
+                if not profile["vat"]: seller["vat_number_if_visible"] = ""
+                if not profile["reg"]: seller["registration_number_if_visible"] = ""
+                if not profile["addr"]: seller["business_address_if_visible"] = ""
+                seller["quality_score"] = calculate_lead_score(seller)
+                days_ago = random.randint(0, 45)
+                collected = (now - timedelta(days=days_ago, hours=random.randint(0, 23))).isoformat()
+                seller["collected_at"] = collected
+                seller["first_seen_at"] = collected
+                seller["last_seen_at"] = collected
+                if random.random() < 0.06:
+                    seller["flagged"] = True
+                    seller["flagged_reason"] = random.choice(["Suspicious data pattern", "Possible duplicate entry", "Needs manual verification", "Incomplete business info"])
+                if random.random() < 0.08:
+                    seller["status"] = "pending_review"
+                elif random.random() < 0.03:
+                    seller["status"] = "skipped"
+                await db.sellers.insert_one(seller)
+                sellers_created += 1
+
+    actions_pool = ["scan_product", "seller_saved", "duplicate_skip", "scan_product", "seller_saved", "scan_product", "pending_review"]
+    for i in range(120):
         mp = random.choice(list(MARKETPLACE_CONFIG.keys()))
         action = random.choice(actions_pool)
         level = "success" if action == "seller_saved" else "warning" if action == "duplicate_skip" else "info"
-        ts = (now - timedelta(hours=random.randint(0, 48), minutes=random.randint(0, 59))).isoformat()
-        detail = f"{'New seller found' if action == 'seller_saved' else 'Scanning product' if action == 'scan_product' else 'Duplicate detected'} ({generate_asin()})"
+        ts = (now - timedelta(hours=random.randint(0, 72), minutes=random.randint(0, 59))).isoformat()
+        detail = f"{'New seller found' if action == 'seller_saved' else 'Scanning product' if action == 'scan_product' else 'Duplicate detected' if action == 'duplicate_skip' else 'Pending review'} ({generate_asin()})"
         await db.scan_log.insert_one({
             "id": str(uuid.uuid4()), "timestamp": ts, "session_id": session_id,
             "marketplace": mp, "action": action, "detail": detail, "level": level,
@@ -741,20 +1008,19 @@ async def seed_data():
     session = {
         "id": session_id, "marketplace": "amazon.de", "mode": "continuous",
         "target_count": 0, "min_delay": 25, "max_delay": 45, "manual_review": False,
-        "status": "stopped", "started_at": (now - timedelta(hours=2)).isoformat(),
+        "status": "stopped", "started_at": (now - timedelta(hours=3)).isoformat(),
         "stopped_at": (now - timedelta(hours=1)).isoformat(),
-        "products_scanned": 87, "sellers_found": 28, "duplicates_skipped": 15, "last_asin": generate_asin(),
+        "products_scanned": 340, "sellers_found": sellers_created, "duplicates_skipped": 45, "last_asin": generate_asin(),
     }
     await db.sessions.insert_one(session)
 
-    # Add processed URLs to show products_scanned count
-    for i in range(87):
+    for i in range(340):
         asin = generate_asin()
         mp = random.choice(list(MARKETPLACE_CONFIG.keys()))
         await db.processed_urls.insert_one({
             "url": f"https://www.{MARKETPLACE_CONFIG[mp]['domain']}/dp/{asin}",
             "asin": asin, "session_id": session_id,
-            "processed_at": (now - timedelta(hours=random.randint(0, 48), minutes=random.randint(0, 59))).isoformat(),
+            "processed_at": (now - timedelta(hours=random.randint(0, 72), minutes=random.randint(0, 59))).isoformat(),
         })
 
     await db.settings.insert_one({
@@ -762,9 +1028,22 @@ async def seed_data():
         "manual_review_enabled": False, "default_marketplace": "amazon.de",
         "default_min_delay": 25, "default_max_delay": 45,
         "default_mode": "continuous", "default_target_count": 50,
+        "scoring_weights": DEFAULT_SCORING_WEIGHTS,
+        "duplicate_rules": {"by_profile_url": True, "by_name_marketplace": True, "by_email": True, "by_phone": True, "by_vat_or_reg": True},
+        "export_options": {"include_flagged_sheet": True, "include_analytics_sheet": True, "alternating_rows": True},
     })
 
-    return {"message": "Demo data seeded successfully", "sellers_count": sellers_created}
+    quick_views = [
+        {"id": str(uuid.uuid4()), "name": "Has Email", "filters": {"has_email": True}, "created_at": now.isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Has Phone", "filters": {"has_phone": True}, "created_at": now.isoformat()},
+        {"id": str(uuid.uuid4()), "name": "High Quality", "filters": {"min_score": 80}, "created_at": now.isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Missing VAT", "filters": {"has_vat": False}, "created_at": now.isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Germany Only", "filters": {"marketplace": "amazon.de"}, "created_at": now.isoformat()},
+        {"id": str(uuid.uuid4()), "name": "Flagged", "filters": {"flagged": True}, "created_at": now.isoformat()},
+    ]
+    await db.saved_views.insert_many(quick_views)
+
+    return {"message": f"Demo data seeded: {sellers_created} sellers across 4 marketplaces", "sellers_count": sellers_created}
 
 @api_router.post("/data/clear")
 async def clear_data():
