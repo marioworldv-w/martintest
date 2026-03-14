@@ -1,53 +1,52 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import './App.css';
+import DashboardLayout from './components/Layout/DashboardLayout';
+import HomePage from './pages/HomePage';
+import IntroPage from './pages/IntroPage';
+import ChatGPTPage from './pages/ChatGPTPage';
+import GeminiPage from './pages/GeminiPage';
+import ComparisonPage from './pages/ComparisonPage';
+import PromptFundamentalsPage from './pages/PromptFundamentalsPage';
+import PromptBuilderPage from './pages/PromptBuilderPage';
+import PromptLibraryPage from './pages/PromptLibraryPage';
+import RolesPage from './pages/RolesPage';
+import GoogleAIPage from './pages/GoogleAIPage';
+import ToolsPage from './pages/ToolsPage';
+import TeachingModePage from './pages/TeachingModePage';
+import PracticePage from './pages/PracticePage';
+import CheatSheetPage from './pages/CheatSheetPage';
+import PrintCenterPage from './pages/PrintCenterPage';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
+function AppRoutes() {
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
+    <DashboardLayout>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/module/intro" element={<IntroPage />} />
+        <Route path="/module/chatgpt" element={<ChatGPTPage />} />
+        <Route path="/module/gemini" element={<GeminiPage />} />
+        <Route path="/module/comparison" element={<ComparisonPage />} />
+        <Route path="/module/prompts" element={<PromptFundamentalsPage />} />
+        <Route path="/module/prompt-builder" element={<PromptBuilderPage />} />
+        <Route path="/module/prompt-library" element={<PromptLibraryPage />} />
+        <Route path="/module/roles" element={<RolesPage />} />
+        <Route path="/module/google-ai" element={<GoogleAIPage />} />
+        <Route path="/module/tools" element={<ToolsPage />} />
+        <Route path="/teaching-mode" element={<TeachingModePage />} />
+        <Route path="/practice" element={<PracticePage />} />
+        <Route path="/cheatsheet" element={<CheatSheetPage />} />
+        <Route path="/print-center" element={<PrintCenterPage />} />
+      </Routes>
+    </DashboardLayout>
   );
-};
+}
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }
 
