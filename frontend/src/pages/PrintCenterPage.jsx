@@ -10,6 +10,13 @@ const PRINT_ITEMS = [
     color: 'yellow',
   },
   {
+    id: 'demo-prompts',
+    title: 'Демо-промты',
+    desc: 'Готовые промты для живой демонстрации на уроке',
+    pages: 2,
+    color: 'yellow',
+  },
+  {
     id: 'comparison',
     title: 'GPT vs Gemini',
     desc: 'Таблица сравнения, когда использовать каждый',
@@ -19,8 +26,8 @@ const PRINT_ITEMS = [
   {
     id: 'prompts',
     title: 'Библиотека промтов',
-    desc: 'Готовые промты по категориям',
-    pages: 2,
+    desc: 'Готовые промты по категориям (120+)',
+    pages: 3,
     color: 'green',
   },
   {
@@ -95,6 +102,7 @@ export default function PrintCenterPage() {
         <div className="grid sm:grid-cols-2 gap-3">
           {[
             { label: 'Шпаргалка', path: '/cheatsheet', color: 'yellow' },
+            { label: 'Демо-промты', path: '/demo-prompts', color: 'yellow' },
             { label: 'GPT vs Gemini', path: '/module/comparison', color: 'blue' },
             { label: 'Библиотека промтов', path: '/module/prompt-library', color: 'green' },
             { label: 'Роли в промтинге', path: '/module/roles', color: 'yellow' },

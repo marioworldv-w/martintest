@@ -231,6 +231,7 @@ export const MODULES = [
 
 export const TOOLS_SECTION = [
   { path: '/teaching-mode', title: 'Режим преподавателя', icon: 'Presentation', color: 'red', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/30', textColor: 'text-red-400', description: 'Поминутный план 2-часового урока' },
+  { path: '/demo-prompts', title: 'Демо-промты', icon: 'Zap', color: 'yellow', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', textColor: 'text-yellow-400', description: 'Готовые промты для живого показа' },
   { path: '/practice', title: 'Упражнения', icon: 'Dumbbell', color: 'green', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30', textColor: 'text-green-400', description: 'Интерактивные задания для студентов' },
   { path: '/cheatsheet', title: 'Шпаргалка', icon: 'FileText', color: 'yellow', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', textColor: 'text-yellow-400', description: '10 правил, шаблоны промтов' },
   { path: '/print-center', title: 'Центр печати', icon: 'Printer', color: 'blue', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/30', textColor: 'text-blue-400', description: 'Распечатайте материалы урока' },

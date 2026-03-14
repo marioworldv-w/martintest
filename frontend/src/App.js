@@ -17,6 +17,7 @@ import TeachingModePage from './pages/TeachingModePage';
 import PracticePage from './pages/PracticePage';
 import CheatSheetPage from './pages/CheatSheetPage';
 import PrintCenterPage from './pages/PrintCenterPage';
+import DemoPromptsPage from './pages/DemoPromptsPage';
 
 function AppRoutes() {
   return (
@@ -34,6 +35,7 @@ function AppRoutes() {
         <Route path="/module/google-ai" element={<GoogleAIPage />} />
         <Route path="/module/tools" element={<ToolsPage />} />
         <Route path="/teaching-mode" element={<TeachingModePage />} />
+        <Route path="/demo-prompts" element={<DemoPromptsPage />} />
         <Route path="/practice" element={<PracticePage />} />
         <Route path="/cheatsheet" element={<CheatSheetPage />} />
         <Route path="/print-center" element={<PrintCenterPage />} />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Library, CheckCircle2, ArrowRight, Copy, Check, Search } from 'lucide-react';
+import { Library, CheckCircle2, ArrowRight, Copy, Check, Search, Printer } from 'lucide-react';
 import { PROMPT_CATEGORIES } from '../data/promptLibrary';
 import { useProgress } from '../hooks/useProgress';
 
@@ -78,7 +78,7 @@ export default function PromptLibraryPage() {
   const totalPrompts = PROMPT_CATEGORIES.reduce((acc, cat) => acc + cat.prompts.length, 0);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-fade-in" data-testid="prompt-library-page">
+    <div className="max-w-5xl mx-auto space-y-6 animate-fade-in print-content" data-testid="prompt-library-page">
       <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -89,7 +89,13 @@ export default function PromptLibraryPage() {
             <h1 className="font-heading text-2xl lg:text-3xl font-bold text-white mb-2">Библиотека промтов</h1>
             <p className="text-zinc-400">{totalPrompts}+ готовых промтов по категориям. Копируйте, адаптируйте, используйте.</p>
           </div>
-          <span className="text-zinc-500 text-sm shrink-0">20 мин</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => window.print()} data-testid="library-print-btn"
+              className="no-print flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs border border-green-500/25 text-green-400 hover:bg-green-500/10 transition-all">
+              <Printer size={14} /> Печать
+            </button>
+            <span className="text-zinc-500 text-sm">20 мин</span>
+          </div>
         </div>
       </div>
 

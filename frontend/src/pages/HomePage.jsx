@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Cpu, MessageSquare, Sparkles, ArrowLeftRight, Terminal, Presentation, Dumbbell, FileText, Printer, CheckCircle2, ArrowRight, Wrench, Library, UserCog, Globe, Layers, Play, ChevronRight } from 'lucide-react';
+import { BookOpen, Cpu, MessageSquare, Sparkles, ArrowLeftRight, Terminal, Presentation, Dumbbell, FileText, Printer, CheckCircle2, ArrowRight, Wrench, Library, UserCog, Globe, Layers, Play, ChevronRight, Zap } from 'lucide-react';
 import { MODULES, TOOLS_SECTION } from '../data/courseData';
 import { useProgress } from '../hooks/useProgress';
 
-const ICON_MAP = { Cpu, MessageSquare, Sparkles, ArrowLeftRight, Terminal, Wrench, Library, UserCog, Globe, Layers, Presentation, Dumbbell, FileText, Printer, BookOpen };
+const ICON_MAP = { Cpu, MessageSquare, Sparkles, ArrowLeftRight, Terminal, Wrench, Library, UserCog, Globe, Layers, Presentation, Dumbbell, FileText, Printer, BookOpen, Zap };
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -80,9 +80,9 @@ export default function HomePage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Модулей', value: '10', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-          { label: 'Промтов в библиотеке', value: '60+', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
+          { label: 'Промтов в библиотеке', value: '120+', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
           { label: 'Упражнений', value: '5', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
-          { label: 'Инструментов', value: '4', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+          { label: 'Инструментов', value: '5', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
         ].map((s, i) => (
           <div key={i} className={`${s.bg} border ${s.border} rounded-xl p-4 text-center`}>
             <div className={`font-heading text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -171,7 +171,7 @@ export default function HomePage() {
             'Чем отличаются ChatGPT и Gemini, когда что использовать',
             'Как писать эффективные промты по формуле',
             'Как использовать роли для профессиональных ответов',
-            'Практическую библиотеку из 60+ готовых промтов',
+            'Практическую библиотеку из 120+ готовых промтов',
             'Как встроить AI в повседневные рабочие задачи',
             'Что такое Google AI Pro и Google AI-экосистема',
           ].map((item, i) => (
