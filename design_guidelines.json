@@ -1,0 +1,140 @@
+{
+  "brand_identity": {
+    "name": "AI Academy",
+    "theme": "dark",
+    "tone": "Premium, Educational, Trustworthy, Modern",
+    "language": "Russian"
+  },
+  "typography": {
+    "headings": {
+      "family": "Unbounded, sans-serif",
+      "weights": ["400", "700"],
+      "usage": "H1, H2, H3, Hero text",
+      "cdn_import": "https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&display=swap"
+    },
+    "body": {
+      "family": "Inter, sans-serif",
+      "weights": ["300", "400", "500", "600"],
+      "usage": "Paragraphs, UI elements, Labels",
+      "cdn_import": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+    },
+    "mono": {
+      "family": "JetBrains Mono, monospace",
+      "weights": ["400"],
+      "usage": "Code blocks, Prompts, Terminal views",
+      "cdn_import": "https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap"
+    }
+  },
+  "colors": {
+    "background": {
+      "default": "#0A0A0A",
+      "card": "#121212",
+      "sidebar": "#0F0F0F",
+      "hover": "#1A1A1A"
+    },
+    "foreground": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "muted": "#71717A"
+    },
+    "accent": {
+      "blue": {
+        "main": "#3B82F6",
+        "glow": "rgba(59, 130, 246, 0.5)",
+        "usage": "Primary actions, Navigation, Trust indicators"
+      },
+      "red": {
+        "main": "#EF4444",
+        "glow": "rgba(239, 68, 68, 0.5)",
+        "usage": "Important warnings, 'Don't' examples, Attention"
+      },
+      "green": {
+        "main": "#22C55E",
+        "glow": "rgba(34, 197, 94, 0.5)",
+        "usage": "Success states, 'Do' examples, Practical tools"
+      },
+      "yellow": {
+        "main": "#EAB308",
+        "glow": "rgba(234, 179, 8, 0.5)",
+        "usage": "Tips, Insights, Key takeaways"
+      }
+    },
+    "border": {
+      "default": "#27272A",
+      "active": "#3F3F46"
+    }
+  },
+  "spacing": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "section_gap": "gap-8",
+    "card_padding": "p-6"
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-white/5 border border-white/10",
+    "glow_effects": "shadow-[0_0_20px_-5px_var(--shadow-color)]",
+    "gradients": {
+      "hero": "bg-gradient-to-br from-blue-900/20 via-background to-background",
+      "card_hover": "bg-gradient-to-br from-white/5 to-transparent"
+    },
+    "border_radius": "rounded-xl"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20",
+      "secondary": "bg-white/10 hover:bg-white/20 text-white border border-white/10",
+      "outline": "border border-zinc-700 hover:bg-zinc-800 text-zinc-300",
+      "danger": "bg-red-600/20 text-red-400 border border-red-900/50 hover:bg-red-600/30"
+    },
+    "cards": {
+      "default": "bg-card border border-border rounded-xl shadow-sm hover:border-zinc-700 transition-colors",
+      "interactive": "group relative overflow-hidden bg-card border border-border rounded-xl hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-300 hover:-translate-y-1"
+    },
+    "inputs": {
+      "default": "bg-zinc-900/50 border-zinc-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg"
+    },
+    "navigation": {
+      "sidebar": "w-64 fixed h-full bg-[#0F0F0F] border-r border-zinc-800 flex flex-col",
+      "link_active": "bg-blue-600/10 text-blue-400 border-r-2 border-blue-500",
+      "link_inactive": "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"
+    }
+  },
+  "image_urls": {
+    "hero_brain": "https://images.unsplash.com/photo-1764336312138-14a5368a6cd3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlJTIwYnJhaW4lMjBnbG93aW5nJTIwYmx1ZXxlbnwwfHx8fDE3NzM1MTQ5MDB8MA&ixlib=rb-4.1.0&q=85",
+    "teacher_avatar": "https://images.unsplash.com/photo-1733222765056-b0790217baa9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjB0ZWFjaGVyJTIwcHJlc2VudGVyJTIwaGVhZHNob3R8ZW58MHx8fHwxNzczNTE0OTAyfDA&ixlib=rb-4.1.0&q=85"
+  },
+  "icons_strategy": {
+    "library": "lucide-react",
+    "mapping": {
+      "dashboard": "LayoutDashboard",
+      "chatgpt": "Bot",
+      "gemini": "Sparkles",
+      "prompt_builder": "Terminal",
+      "practice": "Dumbbell",
+      "roles": "UserCog",
+      "google_tools": "Wrench",
+      "print": "Printer",
+      "teaching_mode": "Presentation",
+      "success": "CheckCircle2",
+      "warning": "AlertTriangle",
+      "tip": "Lightbulb"
+    }
+  },
+  "instructions_to_main_agent": [
+    "INSTALL: yarn add framer-motion @dnd-kit/core react-syntax-highlighter",
+    "SETUP: Add the font imports to /app/frontend/public/index.html head section immediately.",
+    "SETUP: Update tailwind.config.js to include the custom colors (blue, red, green, yellow aliases) and fonts.",
+    "LAYOUT: Implement a 'DashboardLayout' component with a collapsible Sidebar and a TopBar for progress.",
+    "CRITICAL: All content must be in RUSSIAN.",
+    "CRITICAL: Ensure 'Live Teaching Mode' has a large, readable timer/timeline for the presenter.",
+    "INTERACTION: Use framer-motion for smooth page transitions and card hover effects.",
+    "PRINT: Use '@media print' styles to hide sidebar/nav and format content for A4 paper in the 'Print Center'.",
+    "PROMPT BUILDER: Create a dynamic form where user inputs (Role, Context, etc.) update a live 'Preview' box instantly."
+  ],
+  "universal_guidelines": [
+    "Do not use gradients for text, use solid high-contrast colors.",
+    "Ensure all interactive elements have data-testid attributes.",
+    "Use 'sonner' for all toast notifications.",
+    "Use 'lucide-react' for icons.",
+    "Respect the 3-column bento grid layout for the dashboard."
+  ]
+}
